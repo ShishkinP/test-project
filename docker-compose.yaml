@@ -11,8 +11,6 @@ services:
       COMPOSER_MEMORY_LIMIT: -1
       COMPOSER_ALLOW_SUPERUSER: 1
       APP_ENV: 'dev'
-    ports:
-      - 8080:8080
 
   database:
     image: mysql:5.7
@@ -23,3 +21,12 @@ services:
       MYSQL_DATABASE: slim_project
       MYSQL_USER: webmaster
       MYSQL_PASSWORD: webmaster
+
+  web:
+    build:
+      dockerfile: docker/web-dev.Dockerfile
+      context: .
+    ports:
+      - 8080:80
+    volumes:
+      - .:/var/www/app
