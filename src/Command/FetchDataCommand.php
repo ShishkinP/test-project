@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -26,6 +27,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class FetchDataCommand extends Command
 {
     private const SOURCE = 'https://trailers.apple.com/trailers/home/rss/newtrailers.rss';
+
+    /**
+     * @var integer
+     */
+    private $numOfMovies;
 
     /**
      * @var string
@@ -41,11 +47,6 @@ class FetchDataCommand extends Command
      * @var LoggerInterface
      */
     private $logger;
-
-    /**
-     * @var string
-     */
-    private $source;
 
     /**
      * @var EntityManagerInterface
@@ -73,6 +74,7 @@ class FetchDataCommand extends Command
         $this
             ->setDescription('Fetch data from iTunes Movie Trailers')
             ->addArgument('source', InputArgument::OPTIONAL, 'Overwrite source')
+            ->addOption('number','num',InputOption::VALUE_OPTIONAL, 'How many movies will be added', 10)
         ;
     }
 
@@ -85,6 +87,8 @@ class FetchDataCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->logger->info(sprintf('Start %s at %s', __CLASS__, (string) date_create()->format(DATE_ATOM)));
+
+
         $source = self::SOURCE;
         if ($input->getArgument('source')) {
             $source = $input->getArgument('source');
@@ -93,6 +97,13 @@ class FetchDataCommand extends Command
         if (!is_string($source)) {
             throw new RuntimeException('Source must be string');
         }
+
+        if (!is_numeric($input->getOption('number'))) {
+            throw new RuntimeException('Number must be integer');
+        }
+
+        $this->numOfMovies = $input->getOption('number');
+
         $io = new SymfonyStyle($input, $output);
         $io->title(sprintf('Fetch data from %s', $source));
 
@@ -120,23 +131,41 @@ class FetchDataCommand extends Command
     protected function processXml(string $data): void
     {
         $xml = (new \SimpleXMLElement($data))->children();
-//        $namespace = $xml->getNamespaces(true)['content'];
-//        dd((string) $xml->channel->item[0]->children($namespace)->encoded);
+        $namespace = $xml->getNamespaces(true)['content'];
+        $dom = new \DOMDocument();
 
         if (!property_exists($xml, 'channel')) {
             throw new RuntimeException('Could not find \'channel\' element in feed');
         }
-        foreach ($xml->channel->item as $item) {
-            $trailer = $this->getMovie((string) $item->title)
-                ->setTitle((string) $item->title)
-                ->setDescription((string) $item->description)
-                ->setLink((string) $item->link)
-                ->setPubDate($this->parseDate((string) $item->pubDate))
-            ;
 
-            $this->doctrine->persist($trailer);
+        $items = $xml->channel->xpath('item');
+
+        for ($i = 0; ($i <= $this->numOfMovies - 1) || (count($items) < $i); $i++) {
+
+            $this->logger->info(sprintf("№: %s",$i+1));
+
+            $item = $items[$i];
+            $dom->loadHTML((string) $item->children($namespace)->encoded);
+            $image = $dom->getElementsByTagName("img")[0]->getAttribute('src');
+            $title = (string) $item->title;
+            $trailer = $this->doctrine->getRepository(Movie::class)->getMovieByTitle($title);
+
+            if ($trailer === null) {
+
+                $this->logger->info('Create new Movie', ['title' => $title]);
+
+                $trailer = new Movie();
+                $trailer->setTitle((string) $title)
+                        ->setImage((string) $image)
+                        ->setDescription((string) $item->description)
+                        ->setLink((string) $item->link)
+                        ->setPubDate($this->parseDate((string) $item->pubDate));
+                $this->doctrine->persist($trailer);
+            }
+            else {
+                $this->logger->info('Movie found', ['title' => $title]);
+            }
         }
-
         $this->doctrine->flush();
     }
 
@@ -152,26 +181,4 @@ class FetchDataCommand extends Command
         return new \DateTime($date);
     }
 
-    /**
-     * @param string $title
-     *
-     * @return Movie
-     */
-    protected function getMovie(string $title): Movie
-    {
-        $item = $this->doctrine->getRepository(Movie::class)->findOneBy(['title' => $title]);
-
-        if ($item === null) {
-            $this->logger->info('Create new Movie', ['title' => $title]);
-            $item = new Movie();
-        } else {
-            $this->logger->info('Move found', ['title' => $title]);
-        }
-
-        if (!($item instanceof Movie)) {
-            throw new RuntimeException('Wrong type!');
-        }
-
-        return $item;
-    }
 }

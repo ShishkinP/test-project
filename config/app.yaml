@@ -1,5 +1,6 @@
 slim:
-  debug: false
+  debug: true
+  displayErrorDetails: true
 
 templates:
   dir: template

@@ -46,6 +46,8 @@ RUN pecl install xdebug && \
     && echo xdebug.remote_port=9001 >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo xdebug.remote_host=host.docker.internal >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
+RUN sed -i 's|;extension=pdo_mysql|extension=pdo_mysql|g' /etc/php7/php.ini
+
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 COPY --chown=www-data:www-data . /var/www/app

@@ -14,8 +14,6 @@ use Slim\Psr7\Factory\ServerRequestFactory;
 $container = require dirname(__DIR__) . '/bootstrap.php';
 $request = ServerRequestFactory::createFromGlobals();
 
-Slim\Factory\AppFactory::create();
-
 $app = new App(
     $container->get(ResponseFactoryInterface::class),
     $container,

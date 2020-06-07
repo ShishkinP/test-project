@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Movie;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -60,7 +58,7 @@ class HomeController
     {
         try {
             $data = $this->twig->render('home/index.html.twig', [
-                'trailers' => $this->fetchData(),
+                'trailers' => $this->em->getRepository(Movie::class)->getLatestMovies(),
             ]);
         } catch (\Exception $e) {
             throw new HttpBadRequestException($request, $e->getMessage(), $e);
@@ -72,13 +70,47 @@ class HomeController
     }
 
     /**
-     * @return Collection
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface      $response
+     *
+     * @return ResponseInterface
+     *
+     * @throws HttpBadRequestException
      */
-    protected function fetchData(): Collection
+    public function details(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $data = $this->em->getRepository(Movie::class)
-            ->findAll();
+        $movieId = $request->getAttribute('movieId');
 
-        return new ArrayCollection($data);
+        try {
+            $data = $this->twig->render('home/details.html.twig', [
+                'trailer' => $this->em->getRepository(Movie::class)->findOneBy(['id' => $movieId]), //fetchData()[$movieId],
+            ]);
+        } catch (\Exception $e) {
+            throw new HttpBadRequestException($request, $e->getMessage(), $e);
+        }
+
+        $response->getBody()->write($data);
+
+        return $response;
     }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface      $response
+     *
+     * @return ResponseInterface
+     */
+    public function addLike(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $movieId = $request->getAttribute('movieId');
+        $trailer = $this->em->getRepository(Movie::class)->findOneBy(['id' => $movieId]);
+        $trailer->setLikes($trailer->getLikes() + 1);
+        $this->em->persist($trailer);
+        $this->em->flush();
+        $payload = json_encode((string) $trailer->getLikes());
+
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
 }

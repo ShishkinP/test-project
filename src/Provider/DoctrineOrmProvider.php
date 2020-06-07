@@ -28,6 +28,7 @@ class DoctrineOrmProvider implements ServiceProviderInterface
      */
     public function register(Container $container): void
     {
+        #echo EntityManager::class;
         $container->set(EntityManager::class, function (ContainerInterface $container): EntityManager {
             $config = $container->get(Config::class);
 

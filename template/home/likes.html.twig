@@ -1,0 +1,23 @@
+
+{% block scripts %}
+    <script language = "javascript">
+        $(document).ready(function(){
+            $("#thumbUp").on("click", function(event){
+                $.ajax({
+                    url:        '/details/addlike/{{ trailer.id }}',
+                    type:       'POST',
+                    dataType:   'json',
+                    async:      true,
+
+                    success: function(data, status) {
+                        $("#likes").text(data);
+                    },
+                    error : function(xhr, textStatus, errorThrown) {
+                        alert('Ajax request failed.');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
+

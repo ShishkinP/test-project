@@ -1,0 +1,24 @@
+{% extends 'main.html.twig' %}
+
+{% block title %}{{ trailer.title }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="mt-5 mb-4">{{ trailer.title }}</h1>
+        <table class="table table-bordered">
+                <tr>
+                    <td><img src="{{ trailer.image }}" border="0"></td>
+                    <td>{{ trailer.description }}</td>
+                    <td><a href="{{ trailer.link }}">Trailers and clips</a></td>
+                </tr>
+                <tr>
+                    <td>
+                        <span id="thumbUp">&#x1F44D;</span>
+                        <span id="likes">{{ trailer.likes }}</span>
+                    </td>
+                </tr>
+        </table>
+        <a href="/">Go back to the movie list</a>
+    </div>
+    {% include 'home/likes.html.twig' %}
+{% endblock %}

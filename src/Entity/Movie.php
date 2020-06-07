@@ -55,6 +55,12 @@ final class Movie
     private $image;
 
     /**
+     * @var int
+     * @ORM\Column(nullable=false, type="integer", options={"default" : 0})
+     */
+    private $likes;
+
+    /**
      * @return string|null
      */
     public function getImage(): ?string
@@ -108,6 +114,26 @@ final class Movie
     public function getLink(): ?string
     {
         return $this->link;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLikes(): int
+    {
+        return $this->likes;
+    }
+
+    /**
+     * @param int $likes
+     *
+     * @return Movie
+     */
+    public function setLikes(int $likes): self
+    {
+        $this->likes = $likes;
+
+        return $this;
     }
 
     /**

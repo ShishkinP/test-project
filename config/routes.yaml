@@ -3,4 +3,13 @@ main:
   path: ~
   controller: App\Controller\HomeController
   action: index
-
+get_details:
+  method: 'get'
+  path: details/{movieId}
+  controller: App\Controller\HomeController
+  action: details
+add_like:
+  method: 'post'
+  path: details/addlike/{movieId}
+  controller: App\Controller\HomeController
+  action: addLike
