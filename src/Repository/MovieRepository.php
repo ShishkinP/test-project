@@ -27,6 +27,10 @@ class MovieRepository extends EntityRepository
     {
         $item = $this->getEntityManager()->getRepository(Movie::class)->findOneBy(['title' => $title]);
 
+        if ($item === null) {
+            $item = new Movie();
+        }
+
         if (!($item instanceof Movie)) {
             throw new RuntimeException('Wrong type!');
         }

@@ -150,11 +150,10 @@ class FetchDataCommand extends Command
             $title = (string) $item->title;
             $trailer = $this->doctrine->getRepository(Movie::class)->getMovieByTitle($title);
 
-            if ($trailer === null) {
+            if ($trailer->getTitle() === null) {
 
                 $this->logger->info('Create new Movie', ['title' => $title]);
 
-                $trailer = new Movie();
                 $trailer->setTitle((string) $title)
                         ->setImage((string) $image)
                         ->setDescription((string) $item->description)
