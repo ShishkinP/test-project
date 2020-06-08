@@ -15,6 +15,8 @@ docker exec -it test-project_app_1 php bin/console fetch:trailers
 
 [http://localhost:8080](http://localhost:8080)
 
+Щёлкните знак "палец вверх" для добавления отметки "нравится" 
+
 Что сделано
 -----------
 MIDDLE-уровень и отметки "нравится".
